@@ -268,7 +268,15 @@
             }[m]));
         }
 
+        let selectedCardId = null;
+
         function cardButtonTemplate(card) {
+            const isSelected = String(card.id) === String(selectedCardId);
+
+            const selectedStyle = isSelected
+                ? "ring-4 ring-blue-600/80 outline outline-2 outline-blue-200 shadow-lg scale-[1.01]"
+                : "";
+
             const inUse = card.status === 'in_use';
             const base = "group relative rounded-2xl border p-4 text-left shadow-sm transition active:scale-[0.99] focus:outline-none focus:ring-4";
             const color = inUse
@@ -295,7 +303,7 @@
     `;
 
             return `
-      <button data-id="${card.id}" data-status="${card.status}" class="${base} ${color}">
+      <button data-id="${card.id}" data-status="${card.status}" class="${base} ${color} ${selectedStyle}">
         ${tooltipHtml}
 
         <div class="flex items-start justify-between gap-2">
@@ -344,8 +352,10 @@
                     const status = btn.getAttribute('data-status');
 
                     if (status === 'available') {
+                        selectedCardId = String(id);
                         cardIdInput.value = id;
                         showAlert('success', `Kartu terpilih: ${btn.querySelector('.text-3xl')?.textContent ?? ''}`);
+                        await loadCards();
                         return;
                     }
 
@@ -491,8 +501,10 @@
         document.getElementById('refreshBtn')?.addEventListener('click', loadCards);
 
         document.getElementById('clearCard')?.addEventListener('click', () => {
+            selectedCardId = null;
             if (cardIdInput) cardIdInput.value = "";
             showAlert('success', 'Pilihan kartu di-reset.');
+            loadCards();
         });
 
         document.getElementById('visitorForm')?.addEventListener('submit', async (e) => {
