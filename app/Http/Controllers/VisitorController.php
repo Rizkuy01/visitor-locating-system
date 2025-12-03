@@ -6,6 +6,7 @@ use App\Models\Card;
 use App\Models\Visitor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 
 class VisitorController extends Controller
 {
@@ -93,5 +94,108 @@ class VisitorController extends Controller
                 'visitor' => $visitorPayload,
             ]);
         });
+    }
+
+    public function active(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $rows = Visitor::query()
+            ->select(['id','full_name','institution','card_id','check_in_at'])
+            ->with(['card:id,code,rfid_code'])
+            ->whereNull('check_out_at')
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($w) use ($q) {
+                    $w->where('full_name', 'like', "%{$q}%")
+                    ->orWhere('institution', 'like', "%{$q}%")
+                    ->orWhereHas('card', function ($c) use ($q) {
+                        $c->where('code', 'like', "%{$q}%")
+                            ->orWhere('rfid_code', 'like', "%{$q}%");
+                    });
+                });
+            })
+            ->orderBy('check_in_at', 'desc')
+            ->get();
+
+        return response()->json(['data' => $rows]);
+    }
+
+    public function history(Request $request)
+{
+    $q = trim((string) $request->query('q', ''));
+    $from = $request->query('from'); // YYYY-MM-DD
+    $to   = $request->query('to');   // YYYY-MM-DD
+
+    $rows = Visitor::query()
+        ->select(['id','full_name','institution','card_id','check_in_at','check_out_at'])
+        ->with(['card:id,code,rfid_code'])
+        ->when($from, fn($qq) => $qq->whereDate('check_in_at', '>=', $from))
+        ->when($to,   fn($qq) => $qq->whereDate('check_in_at', '<=', $to))
+        ->when($q !== '', function ($query) use ($q) {
+            $query->where(function ($w) use ($q) {
+                $w->where('full_name', 'like', "%{$q}%")
+                  ->orWhere('institution', 'like', "%{$q}%")
+                  ->orWhereHas('card', function ($c) use ($q) {
+                      $c->where('code', 'like', "%{$q}%")
+                        ->orWhere('rfid_code', 'like', "%{$q}%");
+                  });
+            });
+        })
+        ->orderBy('check_in_at', 'desc')
+        ->paginate(20);
+
+    return response()->json($rows);
+}
+
+public function exportHistoryCsv(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        $from = $request->query('from');
+        $to   = $request->query('to');
+
+        $rows = Visitor::query()
+            ->select(['id','full_name','institution','card_id','check_in_at','check_out_at'])
+            ->with(['card:id,code,rfid_code'])
+            ->when($from, fn($qq) => $qq->whereDate('check_in_at', '>=', $from))
+            ->when($to,   fn($qq) => $qq->whereDate('check_in_at', '<=', $to))
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($w) use ($q) {
+                    $w->where('full_name', 'like', "%{$q}%")
+                    ->orWhere('institution', 'like', "%{$q}%")
+                    ->orWhereHas('card', function ($c) use ($q) {
+                        $c->where('code', 'like', "%{$q}%")
+                            ->orWhere('rfid_code', 'like', "%{$q}%");
+                    });
+                });
+            })
+            ->orderBy('check_in_at', 'desc')
+            ->get();
+
+        $filename = 'visitor_history_' . now()->format('Ymd_His') . '.csv';
+
+        $headers = [
+            "Content-Type" => "text/csv",
+            "Content-Disposition" => "attachment; filename={$filename}",
+        ];
+
+        $callback = function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['ID', 'Nama', 'Instansi', 'Card No', 'RFID', 'Check In', 'Check Out']);
+
+            foreach ($rows as $v) {
+                fputcsv($out, [
+                    $v->id,
+                    $v->full_name,
+                    $v->institution,
+                    optional($v->card)->code,
+                    optional($v->card)->rfid_code,
+                    optional($v->check_in_at)->format('Y-m-d H:i:s'),
+                    optional($v->check_out_at)->format('Y-m-d H:i:s'),
+                ]);
+            }
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

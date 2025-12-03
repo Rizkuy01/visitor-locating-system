@@ -116,6 +116,86 @@
                         </div>
                     </div>
 
+                    <!-- Panels: Active Visitors + History -->
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
+                        <!-- Active Visitors -->
+                        <div class="xl:col-span-2 rounded-2xl border border-slate-200 bg-white p-4">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-slate-900">Visitor Aktif</h3>
+                                    <p class="text-xs text-slate-500">Yang masih berada di area perusahaan</p>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <input id="activeSearch" type="text" autocomplete="off"
+                                        class="w-64 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                                        placeholder="Cari nama / instansi / kartu..." />
+                                </div>
+                            </div>
+
+                            <div class="mt-3 overflow-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="text-left text-xs text-slate-500">
+                                        <tr>
+                                            <th class="py-2 pr-3">Kartu</th>
+                                            <th class="py-2 pr-3">Nama</th>
+                                            <th class="py-2 pr-3">Instansi</th>
+                                            <th class="py-2 pr-3">Masuk</th>
+                                            <th class="py-2 pr-3">Durasi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="activeTbody" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- History -->
+                        <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                            <div class="flex items-center justify-between gap-2">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-slate-900">Histori</h3>
+                                    <p class="text-xs text-slate-500">Filter tanggal + export CSV</p>
+                                </div>
+
+                                <button id="exportBtn"
+                                    class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm hover:bg-slate-50">
+                                    Export
+                                </button>
+                            </div>
+
+                            <div class="mt-3 space-y-2">
+                                <input id="historyQ" type="text" autocomplete="off"
+                                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                                    placeholder="Cari nama / instansi / kartu..." />
+
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input id="historyFrom" type="date"
+                                        class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                                    <input id="historyTo" type="date"
+                                        class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                                </div>
+
+                                <button id="historyLoadBtn"
+                                    class="w-full rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+                                    Tampilkan
+                                </button>
+
+                                <div class="mt-2 max-h-56 overflow-auto border border-slate-100 rounded-xl">
+                                    <table class="w-full text-xs">
+                                        <thead class="text-left text-slate-500 bg-slate-50">
+                                            <tr>
+                                                <th class="py-2 px-2">Kartu</th>
+                                                <th class="py-2 px-2">Nama</th>
+                                                <th class="py-2 px-2">Masuk</th>
+                                                <th class="py-2 px-2">Keluar</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="historyTbody" class="divide-y divide-slate-100"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div id="cardsGrid"
                         class="grid [grid-template-columns:repeat(auto-fill,minmax(140px,1fr))] gap-3 lg:gap-3">
@@ -152,6 +232,35 @@
                 hour: '2-digit', minute: '2-digit'
             });
         }
+
+        function humanizeDuration(fromIso) {
+            if (!fromIso) return '-';
+            const start = new Date(fromIso).getTime();
+            const diff = Math.max(0, Date.now() - start);
+            const mins = Math.floor(diff / 60000);
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            return h <= 0 ? `${m}m` : `${h}h ${m}m`;
+        }
+
+        function shortDateTime(iso) {
+            if (!iso) return '-';
+            return new Date(iso).toLocaleString('id-ID', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function isUserTyping() {
+            const el = document.activeElement;
+            if (!el) return false;
+            return ['INPUT', 'TEXTAREA'].includes(el.tagName);
+        }
+
+        setInterval(async () => {
+            if (isUserTyping()) return;
+
+            await loadCards();
+            const q = document.getElementById('activeSearch')?.value ?? '';
+            await loadActiveVisitors(q);
+        }, 5000);
 
         function escapeHtml(str) {
             return String(str ?? "").replace(/[&<>"']/g, (m) => ({
@@ -292,6 +401,92 @@
             });
         }
 
+        let activeCache = [];
+
+        async function loadActiveVisitors(q = '') {
+            const res = await fetch(`/api/visitors/active?q=${encodeURIComponent(q)}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const json = await res.json().catch(() => ({ data: [] }));
+            activeCache = json.data ?? [];
+            renderActiveVisitors();
+        }
+
+        function renderActiveVisitors() {
+            const tbody = document.getElementById('activeTbody');
+            if (!tbody) return;
+
+            tbody.innerHTML = activeCache.map(v => {
+                const cardNo = v.card?.code ?? '-';
+                const masuk = shortDateTime(v.check_in_at);
+                const durasi = humanizeDuration(v.check_in_at);
+
+                return `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2 pr-3 font-semibold text-slate-900">${escapeHtml(cardNo)}</td>
+                    <td class="py-2 pr-3">${escapeHtml(v.full_name)}</td>
+                    <td class="py-2 pr-3 text-slate-600">${escapeHtml(v.institution)}</td>
+                    <td class="py-2 pr-3 text-slate-600">${masuk}</td>
+                    <td class="py-2 pr-3 font-semibold text-slate-900" data-duration="${v.check_in_at}">
+                        ${durasi}
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        // update durasi tanpa fetch, tiap 30 detik
+        setInterval(() => {
+            document.querySelectorAll('[data-duration]').forEach(el => {
+                el.textContent = humanizeDuration(el.getAttribute('data-duration'));
+            });
+        }, 30000);
+
+        // search (debounce)
+        let activeSearchTimer = null;
+        document.getElementById('activeSearch')?.addEventListener('input', (e) => {
+            clearTimeout(activeSearchTimer);
+            activeSearchTimer = setTimeout(() => {
+                loadActiveVisitors(e.target.value ?? '');
+            }, 300);
+        });
+
+        async function loadHistory() {
+            const q = document.getElementById('historyQ')?.value ?? '';
+            const from = document.getElementById('historyFrom')?.value ?? '';
+            const to = document.getElementById('historyTo')?.value ?? '';
+
+            const url = `/api/visitors/history?q=${encodeURIComponent(q)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            const json = await res.json().catch(() => ({}));
+
+            const rows = json.data ?? [];
+            const tbody = document.getElementById('historyTbody');
+            if (!tbody) return;
+
+            tbody.innerHTML = rows.map(v => {
+                const cardNo = v.card?.code ?? '-';
+                return `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-2 font-semibold">${escapeHtml(cardNo)}</td>
+                    <td class="py-2 px-2">${escapeHtml(v.full_name)}</td>
+                    <td class="py-2 px-2 text-slate-600">${shortDateTime(v.check_in_at)}</td>
+                    <td class="py-2 px-2 text-slate-600">${shortDateTime(v.check_out_at)}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        document.getElementById('historyLoadBtn')?.addEventListener('click', loadHistory);
+
+        document.getElementById('exportBtn')?.addEventListener('click', () => {
+            const q = document.getElementById('historyQ')?.value ?? '';
+            const from = document.getElementById('historyFrom')?.value ?? '';
+            const to = document.getElementById('historyTo')?.value ?? '';
+
+            const url = `/api/visitors/history/export?q=${encodeURIComponent(q)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+            window.location.href = url;
+        });
+
+
         // ===== Events (bukan di dalam loadCards) =====
         document.getElementById('refreshBtn')?.addEventListener('click', loadCards);
 
@@ -305,6 +500,16 @@
 
             const fd = new FormData(e.target);
             const payload = Object.fromEntries(fd.entries());
+
+            if (!payload.card_id) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Kartu belum dipilih',
+                    text: 'Silakan klik kartu hijau yang available terlebih dahulu.',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
 
             const res = await fetch("{{ route('visitors.store') }}", {
                 method: "POST",
@@ -346,6 +551,8 @@
 
         // init
         loadCards();
+        loadActiveVisitors();
+        loadHistory(); 
     </script>
 
 
