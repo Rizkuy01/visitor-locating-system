@@ -2,6 +2,7 @@
 use App\Http\Controllers\SecurityDeskController;
 use App\Http\Controllers\VisitorController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CandidateVisitorController;
 
 Route::get('/', [SecurityDeskController::class, 'index'])->name('desk');
 
@@ -13,3 +14,6 @@ Route::get('/api/visitors/history/export', [VisitorController::class, 'exportHis
 
 Route::post('/api/visitors', [VisitorController::class, 'store'])->name('visitors.store');
 Route::post('/api/cards/{card}/checkout', [VisitorController::class, 'checkout'])->name('cards.checkout');
+
+Route::get('/visit', [CandidateVisitorController::class, 'create'])->name('candidate.create');
+Route::post('/visit', [CandidateVisitorController::class, 'store'])->name('candidate.store');
