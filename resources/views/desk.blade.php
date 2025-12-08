@@ -149,7 +149,7 @@
                 </div>
 
                 <!-- Cards: Office | Plant (divider vertikal) -->
-                <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Office -->
                     <div>
                         <div class="mb-2 flex items-center justify-between">
@@ -161,14 +161,8 @@
                             class="grid [grid-template-columns:repeat(auto-fill,minmax(140px,1fr))] gap-3"></div>
                     </div>
 
-                    <!-- Divider vertikal -->
-                    <div class="hidden lg:flex items-stretch justify-center">
-                        <div class="relative w-px bg-slate-200">
-                        </div>
-                    </div>
-
                     <!-- Plant -->
-                    <div>
+                    <div class="lg:border-l lg:border-slate-200 lg:pl-6">
                         <div class="mb-2 flex items-center justify-between">
                             <div class="text-xs font-semibold tracking-wider text-slate-600 uppercase">Plant</div>
                             <div id="plantSummary" class="text-xs text-slate-500"></div>
@@ -179,6 +173,7 @@
                     </div>
                 </div>
 
+
                 <!-- Divider versi mobile (horizontal) -->
                 <div class="my-4 h-px w-full bg-slate-200 lg:hidden"></div>
             </div>
@@ -186,15 +181,29 @@
     </div>
 
     <script>
+        // ====== Globals ======
         const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
         const officeGrid = document.getElementById('officeGrid');
         const plantGrid = document.getElementById('plantGrid');
 
+        let activeCache = [];
+
+        // ===== Helpers =====
         function escapeHtml(str) {
             return String(str ?? "").replace(/[&<>"']/g, (m) => ({
                 "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
             }[m]));
         }
+
+        function displayCardNo(code) {
+            const s = String(code ?? '');
+            const m = s.match(/(\d{3})$/);
+            if (m) return m[1];
+            const n = parseInt(s, 10);
+            if (Number.isFinite(n)) return String(n).padStart(3, '0');
+            return s;
+        }
+
 
         function formatTime(iso) {
             if (!iso) return "-";
@@ -217,23 +226,26 @@
 
         function shortDateTime(iso) {
             if (!iso) return '-';
-            return new Date(iso).toLocaleString('id-ID', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            return new Date(iso).toLocaleString('id-ID', {
+                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+            });
         }
 
         function isUserTyping() {
             const el = document.activeElement;
-            if (!el) return false;
-            return ['INPUT', 'TEXTAREA'].includes(el.tagName);
+            return !!el && ['INPUT', 'TEXTAREA'].includes(el.tagName);
         }
 
+        // Update durasi visitor aktif
         setInterval(() => {
             document.querySelectorAll('[data-duration]').forEach(el => {
                 el.textContent = humanizeDuration(el.getAttribute('data-duration'));
             });
         }, 30000);
 
+        // ===== Card UI =====
         function cardButtonTemplate(card) {
-            const status = card.status;
+            const status = String(card.status ?? '').toLowerCase();
 
             const base = "group relative rounded-2xl border p-4 text-left shadow-sm transition active:scale-[0.99] focus:outline-none focus:ring-4";
             let color = "bg-emerald-500 border-emerald-600 hover:bg-emerald-600 text-white focus:ring-emerald-200/40";
@@ -247,104 +259,85 @@
                 statusText = "DIGUNAKAN";
             }
 
-            const v = card.active_visitor;
-            const tooltipTitle = (status === 'in_use' && v) ? `${v.full_name}` : `Kartu ${card.code}`;
+            const v = card.active_visitor ?? null;
+            const tooltipTitle = (status === 'in_use' && v) ? `${v.full_name}` : `Kartu ${displayCardNo(card.code)}`;
             const tooltipLine1 = card.rfid_code ? `RFID: ${card.rfid_code}` : `RFID: -`;
             const tooltipLine2 = (status === 'in_use' && v) ? `Masuk: ${formatTime(v.check_in_at)}` : ``;
 
             const tooltipHtml = `
-              <div class="pointer-events-none absolute left-1/2 top-0 z-30 w-56 -translate-x-1/2 -translate-y-3 opacity-0
-                          transition group-hover:-translate-y-4 group-hover:opacity-100">
-                <div class="rounded-xl bg-slate-900 text-white shadow-lg ring-1 ring-black/10 px-3 py-2">
-                  <div class="text-sm font-semibold">${escapeHtml(tooltipTitle)}</div>
-                  <div class="text-xs text-slate-200 mt-0.5">${escapeHtml(tooltipLine1)}</div>
-                  ${tooltipLine2 ? `<div class="text-xs text-slate-300 mt-1">${escapeHtml(tooltipLine2)}</div>` : ``}
-                </div>
-                <div class="mx-auto h-2 w-2 rotate-45 bg-slate-900 -mt-1"></div>
-              </div>
-            `;
+      <div class="pointer-events-none absolute left-1/2 top-0 z-30 w-56 -translate-x-1/2 -translate-y-3 opacity-0 transition group-hover:-translate-y-4 group-hover:opacity-100">
+        <div class="rounded-xl bg-slate-900 text-white shadow-lg ring-1 ring-black/10 px-3 py-2">
+          <div class="text-sm font-semibold">${escapeHtml(tooltipTitle)}</div>
+          <div class="text-xs text-slate-200 mt-0.5">${escapeHtml(tooltipLine1)}</div>
+          ${tooltipLine2 ? `<div class="text-xs text-slate-300 mt-1">${escapeHtml(tooltipLine2)}</div>` : ``}
+        </div>
+        <div class="mx-auto h-2 w-2 rotate-45 bg-slate-900 -mt-1"></div>
+      </div>
+    `;
 
             const bottomHtml =
                 (status === 'in_use' && v)
                     ? `<div class="text-xs font-semibold text-white/95">${escapeHtml(v.full_name)}</div>
-                       <div class="text-[11px] text-white/85">${escapeHtml(v.institution)}</div>
-                       <div class="mt-2 inline-flex rounded-lg bg-white/18 px-2.5 py-1 text-[11px] font-semibold">Checkout</div>`
+           <div class="text-[11px] text-white/85">${escapeHtml(v.institution)}</div>
+           <div class="mt-2 inline-flex rounded-lg bg-white/18 px-2.5 py-1 text-[11px] font-semibold">Checkout</div>`
                     : (status === 'booked'
                         ? `<div class="inline-flex rounded-lg bg-white/18 px-2.5 py-1 text-xs font-semibold">Dibooking</div>`
                         : `<div class="inline-flex rounded-lg bg-white/18 px-2.5 py-1 text-xs font-semibold">Available</div>`);
 
             return `
-              <button data-id="${card.id}" data-status="${status}" class="${base} ${color}">
-                ${tooltipHtml}
-                <div class="flex items-start justify-between gap-2">
-                  <div class="text-3xl font-extrabold leading-none">${card.code}</div>
-                  <span class="rounded-full bg-white/18 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide">
-                    ${statusText}
-                  </span>
-                </div>
-                <div class="mt-3">${bottomHtml}</div>
-              </button>
-            `;
+      <button data-id="${card.id}" data-status="${status}" class="${base} ${color}">
+        ${tooltipHtml}
+        <div class="flex items-start justify-between gap-2">
+          <div class="text-3xl font-extrabold leading-none">${escapeHtml(displayCardNo(card.code))}</div>
+          <span class="rounded-full bg-white/18 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide">
+            ${statusText}
+          </span>
+        </div>
+        <div class="mt-3">${bottomHtml}</div>
+      </button>
+    `;
         }
 
+        function normalizeCard(c) {
+            const codeStr = String(c.code ?? '').toUpperCase();
+
+            // fallback based on code prefix
+            const fallbackTipe =
+                codeStr.startsWith('VM') ? 'plant' :
+                    codeStr.startsWith('VB') ? 'office' :
+                        'office';
+
+            return {
+                ...c,
+                active_visitor: c.active_visitor ?? null,
+                tipe: String(c.tipe ?? fallbackTipe).toLowerCase(),
+                status: String(c.status ?? '').toLowerCase(),
+            };
+        }
+
+        // ===== Data loaders =====
         async function loadCards() {
-            const res = await fetch("{{ route('cards') }}", { headers: { 'Accept': 'application/json' } });
+            const res = await fetch("/api/cards", { headers: { Accept: "application/json" } });
+
             const json = await res.json().catch(() => ({}));
 
-            // normalize field names dari backend
-            const cards = (json.cards ?? []).map(c => {
-                const codeNum = Number.parseInt(c.code, 10); // karena code kamu string "1", "2", dst
-                const fallbackType =
-                    Number.isFinite(codeNum) && codeNum >= 11 ? 'plant' : 'office';
+            const cards = (json.cards ?? []).map((c) => {
+                const tipe = String(c.tipe ?? "").toLowerCase();
+                const status = String(c.status ?? "").toLowerCase();
 
-                return {
-                    ...c,
-                    active_visitor: c.active_visitor ?? null,
-                    // ✅ ambil dari backend jika ada, kalau tidak ada pakai fallback dari code
-                    type: String(c.type ?? c.tipe ?? fallbackType).toLowerCase(),
-                    status: String(c.status ?? '').toLowerCase(),
-                };
+                const rawCode = String(c.code ?? "");
+                const m = rawCode.match(/(\d{1,3})$/);
+                const displayCode = m ? String(m[1]).padStart(3, "0") : rawCode;
+
+                return { ...c, tipe, status, displayCode, active_visitor: c.active_visitor ?? null };
             });
 
+            const officeCards = cards.filter((c) => c.tipe === "office");
+            const plantCards = cards.filter((c) => c.tipe === "plant");
 
-            // DEBUG cepat (biar kamu yakin datanya masuk)
-            console.log('cards sample:', cards[0]);
-
-            // Summary global
-            const total = cards.length;
-            const used = cards.filter(c => c.status === 'in_use').length;
-            const booked = cards.filter(c => c.status === 'booked').length;
-            const available = cards.filter(c => c.status === 'available').length;
-
-            const summaryEl = document.getElementById('summaryText');
-            if (summaryEl) summaryEl.textContent = `Total ${total} kartu • Available ${available} • Booked ${booked} • Digunakan ${used}`;
-
-            // ✅ sekarang filter type sudah benar
-            const officeCards = cards.filter(c => c.type === 'office');
-            const plantCards = cards.filter(c => c.type === 'plant');
-
-            // summary per section
-            const officeAvail = officeCards.filter(c => c.status === 'available').length;
-            const officeBooked = officeCards.filter(c => c.status === 'booked').length;
-            const officeUsed = officeCards.filter(c => c.status === 'in_use').length;
-
-            const plantAvail = plantCards.filter(c => c.status === 'available').length;
-            const plantBooked = plantCards.filter(c => c.status === 'booked').length;
-            const plantUsed = plantCards.filter(c => c.status === 'in_use').length;
-
-            const officeSummary = document.getElementById('officeSummary');
-            const plantSummary = document.getElementById('plantSummary');
-            if (officeSummary) officeSummary.textContent = `Available ${officeAvail} • Booked ${officeBooked} • Digunakan ${officeUsed}`;
-            if (plantSummary) plantSummary.textContent = `Available ${plantAvail} • Booked ${plantBooked} • Digunakan ${plantUsed}`;
-
-            // render (pastikan elementnya ada)
-            if (officeGrid) officeGrid.innerHTML = officeCards.map(cardButtonTemplate).join('');
-            if (plantGrid) plantGrid.innerHTML = plantCards.map(cardButtonTemplate).join('');
-
-            bindCardClicks(officeGrid);
-            bindCardClicks(plantGrid);
+            officeGrid.innerHTML = officeCards.map(cardButtonTemplate).join("");
+            plantGrid.innerHTML = plantCards.map(cardButtonTemplate).join("");
         }
-        let activeCache = [];
 
         async function loadActiveVisitors(q = '') {
             const res = await fetch(`/api/visitors/active?q=${encodeURIComponent(q)}`, {
@@ -365,24 +358,16 @@
                 const durasi = humanizeDuration(v.check_in_at);
 
                 return `
-                  <tr class="hover:bg-slate-50">
-                    <td class="py-2 pr-3 font-semibold text-slate-900">${escapeHtml(cardNo)}</td>
-                    <td class="py-2 pr-3">${escapeHtml(v.full_name)}</td>
-                    <td class="py-2 pr-3 text-slate-600">${escapeHtml(v.institution)}</td>
-                    <td class="py-2 pr-3 text-slate-600">${masuk}</td>
-                    <td class="py-2 pr-3 font-semibold text-slate-900" data-duration="${v.check_in_at}">${durasi}</td>
-                  </tr>
-                `;
+        <tr class="hover:bg-slate-50">
+          <td class="py-2 pr-3 font-semibold text-slate-900">${escapeHtml(cardNo)}</td>
+          <td class="py-2 pr-3">${escapeHtml(v.full_name)}</td>
+          <td class="py-2 pr-3 text-slate-600">${escapeHtml(v.institution)}</td>
+          <td class="py-2 pr-3 text-slate-600">${masuk}</td>
+          <td class="py-2 pr-3 font-semibold text-slate-900" data-duration="${v.check_in_at}">${durasi}</td>
+        </tr>
+      `;
             }).join('');
         }
-
-        let activeSearchTimer = null;
-        document.getElementById('activeSearch')?.addEventListener('input', (e) => {
-            clearTimeout(activeSearchTimer);
-            activeSearchTimer = setTimeout(() => {
-                loadActiveVisitors(e.target.value ?? '');
-            }, 300);
-        });
 
         async function loadHistory() {
             const q = document.getElementById('historyQ')?.value ?? '';
@@ -400,15 +385,23 @@
             tbody.innerHTML = rows.map(v => {
                 const cardNo = v.card?.code ?? '-';
                 return `
-                  <tr class="hover:bg-slate-50">
-                    <td class="py-2 px-2 font-semibold">${escapeHtml(cardNo)}</td>
-                    <td class="py-2 px-2">${escapeHtml(v.full_name)}</td>
-                    <td class="py-2 px-2 text-slate-600">${shortDateTime(v.check_in_at)}</td>
-                    <td class="py-2 px-2 text-slate-600">${shortDateTime(v.check_out_at)}</td>
-                  </tr>
-                `;
+        <tr class="hover:bg-slate-50">
+          <td class="py-2 px-2 font-semibold">${escapeHtml(cardNo)}</td>
+          <td class="py-2 px-2">${escapeHtml(v.full_name)}</td>
+          <td class="py-2 px-2 text-slate-600">${shortDateTime(v.check_in_at)}</td>
+          <td class="py-2 px-2 text-slate-600">${shortDateTime(v.check_out_at)}</td>
+        </tr>
+      `;
             }).join('');
         }
+
+        // ===== Events =====
+        // Search active (debounce)
+        let activeSearchTimer = null;
+        document.getElementById('activeSearch')?.addEventListener('input', (e) => {
+            clearTimeout(activeSearchTimer);
+            activeSearchTimer = setTimeout(() => loadActiveVisitors(e.target.value ?? ''), 300);
+        });
 
         document.getElementById('historyLoadBtn')?.addEventListener('click', loadHistory);
 
@@ -416,81 +409,86 @@
             const q = document.getElementById('historyQ')?.value ?? '';
             const from = document.getElementById('historyFrom')?.value ?? '';
             const to = document.getElementById('historyTo')?.value ?? '';
-            const url = `/api/visitors/history/export?q=${encodeURIComponent(q)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
-            window.location.href = url;
+            window.location.href = `/api/visitors/history/export?q=${encodeURIComponent(q)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
         });
 
         document.getElementById('refreshBtn')?.addEventListener('click', async () => {
             await loadCards();
-            const q = document.getElementById('activeSearch')?.value ?? '';
-            await loadActiveVisitors(q);
+            await loadActiveVisitors(document.getElementById('activeSearch')?.value ?? '');
         });
 
-        setInterval(async () => {
-            if (isUserTyping()) return;
-            await loadCards();
-            const q = document.getElementById('activeSearch')?.value ?? '';
-            await loadActiveVisitors(q);
-        }, 5000);
+        // ✅ Delegation
+        function attachCardDelegation(container) {
+            if (!container) return;
+            container.addEventListener('click', async (e) => {
+                const btn = e.target.closest('button[data-id]');
+                if (!btn || !container.contains(btn)) return;
 
-        function bindCardClicks(container) {
-            container.querySelectorAll('button[data-id]').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const id = btn.getAttribute('data-id');
-                    const status = btn.getAttribute('data-status');
+                const id = btn.getAttribute('data-id');
+                const status = btn.getAttribute('data-status');
 
-                    if (status === 'available') return;
+                if (status === 'available') return;
 
-                    if (status === 'booked') {
-                        await Swal.fire({
-                            icon: 'info',
-                            title: 'Kartu sudah dibooking',
-                            text: 'Kartu ini sudah dibooking oleh calon visitor.',
-                            confirmButtonText: 'OK'
-                        });
-                        return;
-                    }
-
-                    const result = await Swal.fire({
-                        icon: 'warning',
-                        title: 'Konfirmasi Checkout',
-                        text: 'Apakah anda yakin visitor akan keluar area perusahaan?',
-                        showCancelButton: true,
-                        confirmButtonText: 'Ya, keluar',
-                        cancelButtonText: 'Batal',
-                        reverseButtons: true,
-                    });
-                    if (!result.isConfirmed) return;
-
-                    const res2 = await fetch(`/api/cards/${id}/checkout`, {
-                        method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }
-                    });
-                    const j2 = await res2.json().catch(() => ({}));
-
-                    if (!res2.ok) {
-                        await Swal.fire({ icon: 'error', title: 'Gagal', text: j2.message ?? 'Gagal checkout.' });
-                        return;
-                    }
-
+                if (status === 'booked') {
                     await Swal.fire({
-                        icon: 'success',
-                        title: 'Checkout berhasil',
-                        text: j2.message ?? 'Visitor checkout. Kartu kembali available.',
+                        icon: 'info',
+                        title: 'Kartu sudah dibooking',
+                        text: 'Kartu ini sudah dibooking oleh calon visitor.',
                         confirmButtonText: 'OK'
                     });
+                    return;
+                }
 
-                    await loadCards();
-                    const q = document.getElementById('activeSearch')?.value ?? '';
-                    await loadActiveVisitors(q);
+                const result = await Swal.fire({
+                    icon: 'warning',
+                    title: 'Konfirmasi Checkout',
+                    text: 'Apakah anda yakin visitor akan keluar area perusahaan?',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, keluar',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
                 });
+                if (!result.isConfirmed) return;
+
+                const res2 = await fetch(`/api/cards/${id}/checkout`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }
+                });
+                const j2 = await res2.json().catch(() => ({}));
+
+                if (!res2.ok) {
+                    await Swal.fire({ icon: 'error', title: 'Gagal', text: j2.message ?? 'Gagal checkout.' });
+                    return;
+                }
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Checkout berhasil',
+                    text: j2.message ?? 'Visitor checkout. Kartu kembali available.',
+                    confirmButtonText: 'OK'
+                });
+
+                await loadCards();
+                await loadActiveVisitors(document.getElementById('activeSearch')?.value ?? '');
             });
         }
 
+        attachCardDelegation(officeGrid);
+        attachCardDelegation(plantGrid);
+
+        // Polling
+        setInterval(async () => {
+            if (isUserTyping()) return;
+            await loadCards();
+            await loadActiveVisitors(document.getElementById('activeSearch')?.value ?? '');
+        }, 5000);
+
+        // init
         loadCards();
         loadActiveVisitors();
         loadHistory();
     </script>
+
 
 </body>
 

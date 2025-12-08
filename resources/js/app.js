@@ -2,7 +2,5 @@ import './bootstrap'
 import Swal from 'sweetalert2'
 window.Swal = Swal
 
-// Jalankan QR generator hanya kalau halaman meng-set window.CANDIDATE_QR
-if (window.CANDIDATE_QR) {
-  import('./pages/candidate-qr')
-}
+// SELALU load, modulnya yang cek halaman candidate-success
+import './pages/candidate-qr'

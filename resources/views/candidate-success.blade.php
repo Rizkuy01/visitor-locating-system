@@ -29,9 +29,14 @@
                 <div class="rounded-2xl border border-slate-200 bg-white p-4 flex flex-col items-center">
                     <div id="qrWrap" class="w-full flex justify-center"></div>
                     <div class="mt-3 text-xs text-slate-500">
-                        RFID: <span class="font-mono text-slate-800">{{ $rfid_code }}</span>
+                        {{-- RFID: <span class="font-mono text-slate-800">{{ $rfid_code }}</span> --}}
                     </div>
                 </div>
+
+                <button id="downloadPngBtn" type="button"
+                    class="block w-full text-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800">
+                    Download PNG
+                </button>
 
                 <a href="{{ route('candidate.create') }}"
                     class="block w-full text-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
@@ -41,9 +46,20 @@
         </div>
     </div>
 
+    @php
+        $meta = [
+            'full_name' => $full_name,
+            'institution' => $institution,
+            'tipe' => $tipe,
+            'card_code' => $card_code,
+        ];
+    @endphp
+
     <script>
         window.CANDIDATE_QR = @json($rfid_code);
+        window.CANDIDATE_META = @json($meta);
     </script>
+
 </body>
 
 </html>

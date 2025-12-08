@@ -12,5 +12,6 @@ class Card extends Model
     public function activeVisitor(): HasOne
     {
         return $this->hasOne(Visitor::class)->whereNull('check_out_at');
+        return $this->belongsTo(\App\Models\Visitor::class, 'active_visitor_id');
     }
 }

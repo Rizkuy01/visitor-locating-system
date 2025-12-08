@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Card;
+use App\Models\Visitor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,14 +23,10 @@ class CandidateVisitorController extends Controller
         ]);
 
         $result = DB::transaction(function () use ($data) {
-            $range = $data['tipe'] === 'office' ? [1, 10] : [11, 20];
-
-            /** @var Card|null $card */
             $card = Card::lockForUpdate()
                 ->where('tipe', $data['tipe'])
                 ->where('status', 'available')
-                ->whereBetween('code', $range)
-                ->orderBy('code')
+                ->orderBy('id')
                 ->first();
 
             if (!$card) {
@@ -40,17 +37,28 @@ class CandidateVisitorController extends Controller
                 return ['ok' => false, 'message' => 'Kartu terpilih belum memiliki RFID code. Hubungi security/admin.'];
             }
 
+            // 1) set kartu jadi booked
             $card->update(['status' => 'booked']);
+
+            // 2) simpan data visitor (booking) ke tabel visitors
+            $visitor = Visitor::create([
+                'full_name'   => $data['full_name'],
+                'institution' => $data['institution'],
+                'card_id'     => $card->id,
+                'check_in_at' => null,
+                'check_out_at'=> null,
+            ]);
 
             return [
                 'ok' => true,
                 'payload' => [
-                    'full_name'   => $data['full_name'],
-                    'institution' => $data['institution'],
-                    'tipe'        => $data['tipe'],
+                    'visitor_id'  => $visitor->id,
+                    'full_name'   => $visitor->full_name,
+                    'institution' => $visitor->institution,
+                    'tipe'        => $card->tipe,      // pastikan sama dengan kartu terpilih
                     'card_id'     => $card->id,
-                    'card_code'   => $card->code,
-                    'rfid_code'   => $card->rfid_code,
+                    'card_code'   => $card->code,      // VB001/VM001
+                    'rfid_code'   => $card->rfid_code, // kalau masih kamu butuhkan
                 ]
             ];
         });

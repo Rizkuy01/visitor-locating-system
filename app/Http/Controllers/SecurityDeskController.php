@@ -8,20 +8,30 @@ class SecurityDeskController extends Controller
 {
     public function index()
     {
-        // Render halaman (data akan di-refresh via /api/cards)
         return view('desk');
     }
 
     public function cards()
     {
         $cards = Card::query()
-            ->with(['activeVisitor:id,card_id,full_name,institution,check_in_at'])
-            ->orderByRaw('CAST(code AS UNSIGNED) ASC')
-            ->get(['id', 'code', 'rfid_code', 'status']);
+            ->with(['activeVisitor:id,full_name,institution,card_id,check_in_at,check_out_at'])
+            ->orderBy('id')
+            ->get()
+            ->map(function ($c) {
+                return [
+                    'id' => $c->id,
+                    'code' => $c->code,
+                    'rfid_code' => $c->rfid_code,
+                    'tipe' => $c->tipe,
+                    'status' => $c->status,
+                    'active_visitor' => $c->activeVisitor ? [
+                        'full_name' => $c->activeVisitor->full_name,
+                        'institution' => $c->activeVisitor->institution,
+                        'check_in_at' => $c->activeVisitor->check_in_at,
+                    ] : null,
+                ];
+            });
 
-        return response()->json([
-            'cards' => $cards,
-        ]);
+        return response()->json(['cards' => $cards]);
     }
 }
-
