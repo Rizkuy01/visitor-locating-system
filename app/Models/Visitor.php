@@ -3,20 +3,34 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Visitor extends Model
 {
-    protected $fillable = ['full_name', 'institution', 'card_id', 'check_in_at', 'check_out_at'];
-
-    protected $casts = [
-        'check_in_at' => 'datetime',
-        'check_out_at' => 'datetime',
+    protected $fillable = [
+        'tanggal',
+        'full_name',
+        'institution',
+        'card_id',
+        'no_hp',
+        'no_kendaraan',
+        'yang_ditemui',
+        'urusan',
+        'jumlah',
+        'jam_pertemuan',
+        'check_in_at',
+        'check_out_at',
+        'batch',
     ];
 
-    public function card(): BelongsTo
+    protected $casts = [
+        'tanggal' => 'date',
+        'check_in_at' => 'datetime',
+        'check_out_at' => 'datetime',
+        // jam_pertemuan biar tidak di-cast aneh-aneh, biarkan string (H:i) juga boleh.
+    ];
+
+    public function card()
     {
         return $this->belongsTo(Card::class);
     }
 }
-

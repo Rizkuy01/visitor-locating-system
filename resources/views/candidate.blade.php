@@ -32,6 +32,17 @@
                     </div>
                 @endif
 
+                @if ($errors->any())
+                    <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                        <div class="font-semibold mb-1">Periksa input:</div>
+                        <ul class="list-disc pl-5">
+                            @foreach ($errors->all() as $e)
+                                <li>{{ $e }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <form id="candidateForm" action="{{ route('candidate.store') }}" method="POST" class="space-y-4"
                     autocomplete="off">
                     @csrf
@@ -39,15 +50,76 @@
                     <div>
                         <label class="block text-sm font-semibold text-slate-700">Nama Lengkap</label>
                         <input name="full_name" value="{{ old('full_name') }}" required class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm
-              focus:border-red-500 focus:ring-4 focus:ring-red-500/15" placeholder="Nama sesuai KTP" autocomplete="off"
+              focus:border-red-500 focus:ring-4 focus:ring-red-500/15" placeholder="Nama sesuai KTP"
                             autocapitalize="words">
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-slate-700">Asal Instansi</label>
                         <input name="institution" value="{{ old('institution') }}" required class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm
-              focus:border-red-500 focus:ring-4 focus:ring-red-500/15" placeholder="Nama perusahaan / instansi"
-                            autocomplete="off">
+              focus:border-red-500 focus:ring-4 focus:ring-red-500/15" placeholder="Nama perusahaan / instansi">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">No HP</label>
+                        <input name="no_hp" value="{{ old('no_hp') }}" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm
+              focus:border-red-500 focus:ring-4 focus:ring-red-500/15" placeholder="08xxxxxxxxxx" inputmode="tel">
+                        <p class="mt-1 text-xs text-slate-500">Opsional</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Yang Ditemui</label>
+                        <input name="yang_ditemui" value="{{ old('yang_ditemui') }}" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm
+              focus:border-red-500 focus:ring-4 focus:ring-red-500/15" placeholder="Nama PIC / Karyawan">
+                        <p class="mt-1 text-xs text-slate-500">Opsional</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Urusan</label>
+                        <input name="urusan" value="{{ old('urusan') }}" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm
+              focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                            placeholder="Contoh: Meeting / Audit / Delivery">
+                        <p class="mt-1 text-xs text-slate-500">Opsional</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700">Jumlah Orang</label>
+                            <input name="jumlah" value="{{ old('jumlah') }}" type="number" min="1" max="999" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 shadow-sm
+                focus:border-red-500 focus:ring-4 focus:ring-red-500/15" placeholder="Jumlah orang">
+                            <p class="mt-1 text-xs text-slate-500">Opsional</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700">Jam Pertemuan</label>
+                            <input name="jam_pertemuan" value="{{ old('jam_pertemuan') }}" type="time" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 shadow-sm
+                focus:border-red-500 focus:ring-4 focus:ring-red-500/15">
+                            <p class="mt-1 text-xs text-slate-500">Opsional</p>
+                        </div>
+                    </div>
+
+                    <div class="rounded-xl border border-slate-200 p-4 bg-slate-50">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Membawa Kendaraan?</label>
+
+                        <div class="flex items-center gap-4">
+                            <label class="inline-flex items-center gap-2 text-sm">
+                                <input type="radio" name="bawa_kendaraan" value="tidak" class="h-4 w-4"
+                                    @checked(old('bawa_kendaraan', 'tidak') === 'tidak')>
+                                Tidak
+                            </label>
+
+                            <label class="inline-flex items-center gap-2 text-sm">
+                                <input type="radio" name="bawa_kendaraan" value="ya" class="h-4 w-4"
+                                    @checked(old('bawa_kendaraan') === 'ya')>
+                                Ya
+                            </label>
+                        </div>
+
+                        <div id="noKendaraanWrap" class="mt-3 hidden">
+                            <input name="no_kendaraan" id="no_kendaraan" value="{{ old('no_kendaraan') }}" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm
+                focus:border-red-500 focus:ring-4 focus:ring-red-500/15" placeholder="Contoh: B 1234 ABC">
+                            <p class="mt-1 text-xs text-slate-500">Wajib diisi jika membawa kendaraan</p>
+                        </div>
                     </div>
 
                     <div>
@@ -58,8 +130,7 @@
                             <option value="office" @selected(old('tipe') === 'office')>Office</option>
                             <option value="plant" @selected(old('tipe') === 'plant')>Plant</option>
                         </select>
-                        <p class="mt-2 text-xs text-slate-500">Kartu akan dipilih otomatis sesuai tipe (Office: 1–10,
-                            Plant: 11–20).</p>
+                        <p class="mt-2 text-xs text-slate-500">Kartu dipilih otomatis sesuai tipe.</p>
                     </div>
 
                     <button type="submit" class="w-full rounded-xl bg-red-500 px-4 py-3 text-white font-semibold shadow-sm
@@ -71,9 +142,28 @@
         </div>
 
         <p class="mt-4 text-center text-xs text-slate-500">
-            Setelah submit, QR akan berisi kode RFID kartu Anda. Tunjukkan ke Security.
+            Setelah submit, data booking tersimpan. Saat datang, Security melakukan check-in.
         </p>
     </div>
+
+    <script>
+        const wrap = document.getElementById('noKendaraanWrap');
+        const input = document.getElementById('no_kendaraan');
+
+        function syncNoKendaraan() {
+            const picked = document.querySelector('input[name="bawa_kendaraan"]:checked')?.value ?? 'tidak';
+            const show = picked === 'ya';
+            wrap.classList.toggle('hidden', !show);
+            input.toggleAttribute('required', show);
+            if (!show) input.value = '';
+        }
+
+        document.querySelectorAll('input[name="bawa_kendaraan"]').forEach(r => {
+            r.addEventListener('change', syncNoKendaraan);
+        });
+
+        syncNoKendaraan();
+    </script>
 </body>
 
 </html>
