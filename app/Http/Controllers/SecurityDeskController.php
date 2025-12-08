@@ -14,7 +14,10 @@ class SecurityDeskController extends Controller
     public function cards()
     {
         $cards = Card::query()
-            ->with(['activeVisitor:id,full_name,institution,card_id,check_in_at,check_out_at'])
+            ->with([
+                'activeVisitor:id,full_name,institution,card_id,check_in_at,check_out_at',
+                'bookedVisitor:id,full_name,institution,card_id,created_at,check_in_at,check_out_at',
+            ])
             ->orderBy('id')
             ->get()
             ->map(function ($c) {
@@ -24,10 +27,17 @@ class SecurityDeskController extends Controller
                     'rfid_code' => $c->rfid_code,
                     'tipe' => $c->tipe,
                     'status' => $c->status,
+
                     'active_visitor' => $c->activeVisitor ? [
                         'full_name' => $c->activeVisitor->full_name,
                         'institution' => $c->activeVisitor->institution,
                         'check_in_at' => $c->activeVisitor->check_in_at,
+                    ] : null,
+
+                    'booked_visitor' => $c->bookedVisitor ? [
+                        'full_name' => $c->bookedVisitor->full_name,
+                        'institution' => $c->bookedVisitor->institution,
+                        'booked_at' => $c->bookedVisitor->created_at,
                     ] : null,
                 ];
             });

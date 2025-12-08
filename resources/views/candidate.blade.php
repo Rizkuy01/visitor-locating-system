@@ -64,14 +64,12 @@
                         <label class="block text-sm font-semibold text-slate-700">No HP</label>
                         <input name="no_hp" value="{{ old('no_hp') }}" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm
               focus:border-red-500 focus:ring-4 focus:ring-red-500/15" placeholder="08xxxxxxxxxx" inputmode="tel">
-                        <p class="mt-1 text-xs text-slate-500">Opsional</p>
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-slate-700">Yang Ditemui</label>
                         <input name="yang_ditemui" value="{{ old('yang_ditemui') }}" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm
               focus:border-red-500 focus:ring-4 focus:ring-red-500/15" placeholder="Nama PIC / Karyawan">
-                        <p class="mt-1 text-xs text-slate-500">Opsional</p>
                     </div>
 
                     <div>
@@ -79,7 +77,6 @@
                         <input name="urusan" value="{{ old('urusan') }}" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm
               focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
                             placeholder="Contoh: Meeting / Audit / Delivery">
-                        <p class="mt-1 text-xs text-slate-500">Opsional</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -87,14 +84,14 @@
                             <label class="block text-sm font-semibold text-slate-700">Jumlah Orang</label>
                             <input name="jumlah" value="{{ old('jumlah') }}" type="number" min="1" max="999" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 shadow-sm
                 focus:border-red-500 focus:ring-4 focus:ring-red-500/15" placeholder="Jumlah orang">
-                            <p class="mt-1 text-xs text-slate-500">Opsional</p>
+
                         </div>
 
                         <div>
                             <label class="block text-sm font-semibold text-slate-700">Jam Pertemuan</label>
                             <input name="jam_pertemuan" value="{{ old('jam_pertemuan') }}" type="time" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 shadow-sm
                 focus:border-red-500 focus:ring-4 focus:ring-red-500/15">
-                            <p class="mt-1 text-xs text-slate-500">Opsional</p>
+
                         </div>
                     </div>
 

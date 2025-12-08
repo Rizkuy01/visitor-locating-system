@@ -7,11 +7,22 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Card extends Model
 {
-    protected $fillable = ['code', 'status'];
+    protected $fillable = ['code', 'rfid_code', 'tipe', 'status'];
 
-    public function activeVisitor(): HasOne
+    public function activeVisitor()
     {
-        return $this->hasOne(Visitor::class)->whereNull('check_out_at');
-        return $this->belongsTo(\App\Models\Visitor::class, 'active_visitor_id');
+        return $this->hasOne(Visitor::class, 'card_id')
+            ->whereNotNull('check_in_at')
+            ->whereNull('check_out_at')
+            ->orderByDesc('id');
+    }
+
+    public function bookedVisitor()
+    {
+        return $this->hasOne(Visitor::class, 'card_id')
+            ->whereNull('check_in_at')
+            ->whereNull('check_out_at')
+            ->orderByDesc('id');
     }
 }
+

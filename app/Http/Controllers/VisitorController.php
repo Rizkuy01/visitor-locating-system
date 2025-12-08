@@ -23,16 +23,35 @@ class VisitorController extends Controller
             $card = Card::lockForUpdate()->findOrFail($data['card_id']);
 
             if ($card->status !== 'available') {
-                return response()->json([
-                    'message' => 'Kartu sedang digunakan. Pilih kartu lain.',
-                ], 409);
+                return response()->json(['message' => 'Kartu sedang digunakan. Pilih kartu lain.'], 409);
             }
 
+            // ===== generate batch_code =====
+            $today  = Carbon::today();
+            $prefix = $today->format('dmy'); // 081225
+
+            $lastToday = Visitor::query()
+                ->whereDate('tanggal', $today)
+                ->whereNotNull('batch_code')
+                ->orderBy('batch_code', 'desc')
+                ->lockForUpdate()
+                ->first();
+
+            $nextSeq = 1;
+            if ($lastToday && preg_match('/^\d{6}(\d{3})$/', $lastToday->batch_code, $m)) {
+                $nextSeq = ((int)$m[1]) + 1;
+            }
+
+            $batchCode = $prefix . str_pad((string)$nextSeq, 3, '0', STR_PAD_LEFT);
+
+            // ===== create visitor =====
             $visitor = Visitor::create([
+                'batch_code'  => $batchCode,
                 'full_name'   => $data['full_name'],
                 'institution' => $data['institution'],
                 'card_id'     => $card->id,
                 'check_in_at' => now(),
+                'check_out_at'=> null,
             ]);
 
             $card->update(['status' => 'in_use']);
@@ -40,11 +59,12 @@ class VisitorController extends Controller
             return response()->json([
                 'message' => 'Visitor berhasil ditambahkan.',
                 'card' => [
-                    'id'   => $card->id,   // “kartu no” (id db)
-                    'code' => $card->code, // kode kartu yang tampil di grid
+                    'id'   => $card->id,
+                    'code' => $card->code,
                 ],
                 'visitor' => [
                     'id'          => $visitor->id,
+                    'batch_code'  => $visitor->batch_code,
                     'full_name'   => $visitor->full_name,
                     'institution' => $visitor->institution,
                     'check_in_at' => $visitor->check_in_at,
@@ -120,14 +140,13 @@ class VisitorController extends Controller
         return response()->json(['data' => $rows]);
     }
 
-    public function history(Request $request)
-{
+    public function history(Request $request){
     $q = trim((string) $request->query('q', ''));
     $from = $request->query('from'); // YYYY-MM-DD
     $to   = $request->query('to');   // YYYY-MM-DD
 
     $rows = Visitor::query()
-        ->select(['id','full_name','institution','card_id','check_in_at','check_out_at'])
+        ->select(['id','batch_code','full_name','institution','card_id','check_in_at','check_out_at'])
         ->with(['card:id,code,rfid_code'])
         ->when($from, fn($qq) => $qq->whereDate('check_in_at', '>=', $from))
         ->when($to,   fn($qq) => $qq->whereDate('check_in_at', '<=', $to))
@@ -187,14 +206,13 @@ public function exportHistoryCsv(Request $request)
         // BOM UTF-8 biar Excel baca UTF-8 dengan benar
         fwrite($out, "\xEF\xBB\xBF");
 
-        fputcsv($out, ['ID', 'Nama', 'Instansi', 'Card Code', 'RFID', 'Check In', 'Check Out'], $delimiter);
+        fputcsv($out, ['ID', 'Batch Code', 'Nama', 'Instansi', 'Card Code', 'RFID', 'Check In', 'Check Out'], $delimiter);
 
         foreach ($rows as $v) {
             $cardCode = optional($v->card)->code ?? '';
             $rfid     = optional($v->card)->rfid_code ?? '';
 
-            // Trik biar Excel tidak ubah jadi scientific notation / auto-format
-            // akan tampil sebagai teks
+            // Trik biar Excel tidak ubah jadi scientific notation 
             $cardCodeExcel = $cardCode !== '' ? '="'.$cardCode.'"' : '';
             $rfidExcel     = $rfid !== '' ? '="'.$rfid.'"' : '';
 
@@ -203,6 +221,7 @@ public function exportHistoryCsv(Request $request)
 
             fputcsv($out, [
                 $v->id,
+                $v->batch_code,
                 $v->full_name,
                 $v->institution,
                 $cardCodeExcel,

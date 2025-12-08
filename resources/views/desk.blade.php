@@ -258,21 +258,39 @@
                 statusText = "DIGUNAKAN";
             }
 
-            const v = card.active_visitor ?? null;
-            const tooltipTitle = (status === 'in_use' && v) ? `${v.full_name}` : `Kartu ${displayCardNo(card.code)}`;
+            const vInUse = card.active_visitor ?? null;
+            const vBooked = card.booked_visitor ?? null;
+
+            const tooltipTitle =
+                (status === 'in_use' && vInUse) ? `${vInUse.full_name}` : `Kartu ${displayCardNo(card.code)}`;
+
             const tooltipLine1 = card.rfid_code ? `RFID: ${card.rfid_code}` : `RFID: -`;
-            const tooltipLine2 = (status === 'in_use' && v) ? `Masuk: ${formatTime(v.check_in_at)}` : ``;
+
+            // baris kecil sesuai status
+            let tooltipLine2 = '';
+            if (status === 'booked' && vBooked) {
+                tooltipLine2 = `Booked by: ${vBooked.full_name}`;
+            } else if (status === 'in_use' && vInUse) {
+                tooltipLine2 = `Used by: ${vInUse.full_name}`;
+            }
+
+            // optional baris ke-3 untuk jam masuk
+            const tooltipLine3 = (status === 'in_use' && vInUse)
+                ? `Masuk: ${formatTime(vInUse.check_in_at)}`
+                : '';
+
 
             const tooltipHtml = `
-      <div class="pointer-events-none absolute left-1/2 top-0 z-30 w-56 -translate-x-1/2 -translate-y-3 opacity-0 transition group-hover:-translate-y-4 group-hover:opacity-100">
-        <div class="rounded-xl bg-slate-900 text-white shadow-lg ring-1 ring-black/10 px-3 py-2">
-          <div class="text-sm font-semibold">${escapeHtml(tooltipTitle)}</div>
-          <div class="text-xs text-slate-200 mt-0.5">${escapeHtml(tooltipLine1)}</div>
-          ${tooltipLine2 ? `<div class="text-xs text-slate-300 mt-1">${escapeHtml(tooltipLine2)}</div>` : ``}
-        </div>
-        <div class="mx-auto h-2 w-2 rotate-45 bg-slate-900 -mt-1"></div>
-      </div>
-    `;
+                <div class="pointer-events-none absolute left-1/2 top-0 z-30 w-56 -translate-x-1/2 -translate-y-3 opacity-0 transition group-hover:-translate-y-4 group-hover:opacity-100">
+                    <div class="rounded-xl bg-slate-900 text-white shadow-lg ring-1 ring-black/10 px-3 py-2">
+                    <div class="text-sm font-semibold">${escapeHtml(tooltipTitle)}</div>
+                    <div class="text-xs text-slate-200 mt-0.5">${escapeHtml(tooltipLine1)}</div>
+                    ${tooltipLine2 ? `<div class="text-[11px] text-slate-300 mt-1">${escapeHtml(tooltipLine2)}</div>` : ``}
+                    ${tooltipLine3 ? `<div class="text-[11px] text-slate-300 mt-1">${escapeHtml(tooltipLine3)}</div>` : ``}
+                    </div>
+                    <div class="mx-auto h-2 w-2 rotate-45 bg-slate-900 -mt-1"></div>
+                </div>
+                `;
 
             const bottomHtml =
                 (status === 'in_use' && v)
