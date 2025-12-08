@@ -35,7 +35,7 @@
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <h2 class="text-lg font-semibold">Data Kartu</h2>
-                            <p id="summaryText" class="text-xs text-slate-500">Memuat...</p>
+                            <p id="summaryText" class="text-xs text-slate-500">Cek data visitor di dashboard ini.</p>
                         </div>
 
                         <div class="flex items-center gap-2">
@@ -74,7 +74,6 @@
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <div>
                                 <h3 class="text-sm font-semibold text-slate-900">Visitor Aktif</h3>
-                                <p class="text-xs text-slate-500">Yang masih berada di area perusahaan</p>
                             </div>
 
                             <div class="flex items-center gap-2">

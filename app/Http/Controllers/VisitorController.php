@@ -148,54 +148,74 @@ class VisitorController extends Controller
 }
 
 public function exportHistoryCsv(Request $request)
-    {
-        $q = trim((string) $request->query('q', ''));
-        $from = $request->query('from');
-        $to   = $request->query('to');
+{
+    $q = trim((string) $request->query('q', ''));
+    $from = $request->query('from');
+    $to   = $request->query('to');
 
-        $rows = Visitor::query()
-            ->select(['id','full_name','institution','card_id','check_in_at','check_out_at'])
-            ->with(['card:id,code,rfid_code'])
-            ->when($from, fn($qq) => $qq->whereDate('check_in_at', '>=', $from))
-            ->when($to,   fn($qq) => $qq->whereDate('check_in_at', '<=', $to))
-            ->when($q !== '', function ($query) use ($q) {
-                $query->where(function ($w) use ($q) {
-                    $w->where('full_name', 'like', "%{$q}%")
-                    ->orWhere('institution', 'like', "%{$q}%")
-                    ->orWhereHas('card', function ($c) use ($q) {
-                        $c->where('code', 'like', "%{$q}%")
-                            ->orWhere('rfid_code', 'like', "%{$q}%");
-                    });
-                });
-            })
-            ->orderBy('check_in_at', 'desc')
-            ->get();
+    $rows = Visitor::query()
+        ->select(['id','full_name','institution','card_id','check_in_at','check_out_at'])
+        ->with(['card:id,code,rfid_code'])
+        ->when($from, fn($qq) => $qq->whereDate('check_in_at', '>=', $from))
+        ->when($to,   fn($qq) => $qq->whereDate('check_in_at', '<=', $to))
+        ->when($q !== '', function ($query) use ($q) {
+            $query->where(function ($w) use ($q) {
+                $w->where('full_name', 'like', "%{$q}%")
+                  ->orWhere('institution', 'like', "%{$q}%")
+                  ->orWhereHas('card', function ($c) use ($q) {
+                      $c->where('code', 'like', "%{$q}%")
+                        ->orWhere('rfid_code', 'like', "%{$q}%");
+                  });
+            });
+        })
+        ->orderBy('check_in_at', 'desc')
+        ->get();
 
-        $filename = 'visitor_history_' . now()->format('Ymd_His') . '.csv';
+    $filename = 'visitor_history_' . now()->format('Ymd_His') . '.csv';
 
-        $headers = [
-            "Content-Type" => "text/csv",
-            "Content-Disposition" => "attachment; filename={$filename}",
-        ];
+    // Excel Indonesia biasanya nyaman dengan delimiter ;
+    $delimiter = ';';
 
-        $callback = function () use ($rows) {
-            $out = fopen('php://output', 'w');
-            fputcsv($out, ['ID', 'Nama', 'Instansi', 'Card No', 'RFID', 'Check In', 'Check Out']);
+    $headers = [
+        "Content-Type" => "text/csv; charset=UTF-8",
+        "Content-Disposition" => "attachment; filename={$filename}",
+    ];
 
-            foreach ($rows as $v) {
-                fputcsv($out, [
-                    $v->id,
-                    $v->full_name,
-                    $v->institution,
-                    optional($v->card)->code,
-                    optional($v->card)->rfid_code,
-                    optional($v->check_in_at)->format('Y-m-d H:i:s'),
-                    optional($v->check_out_at)->format('Y-m-d H:i:s'),
-                ]);
-            }
-            fclose($out);
-        };
+    $callback = function () use ($rows, $delimiter) {
+        $out = fopen('php://output', 'w');
 
-        return response()->stream($callback, 200, $headers);
-    }
+        // BOM UTF-8 biar Excel baca UTF-8 dengan benar
+        fwrite($out, "\xEF\xBB\xBF");
+
+        fputcsv($out, ['ID', 'Nama', 'Instansi', 'Card Code', 'RFID', 'Check In', 'Check Out'], $delimiter);
+
+        foreach ($rows as $v) {
+            $cardCode = optional($v->card)->code ?? '';
+            $rfid     = optional($v->card)->rfid_code ?? '';
+
+            // Trik biar Excel tidak ubah jadi scientific notation / auto-format
+            // akan tampil sebagai teks
+            $cardCodeExcel = $cardCode !== '' ? '="'.$cardCode.'"' : '';
+            $rfidExcel     = $rfid !== '' ? '="'.$rfid.'"' : '';
+
+            $checkIn  = $v->check_in_at ? Carbon::parse($v->check_in_at)->format('Y-m-d H:i:s') : '';
+            $checkOut = $v->check_out_at ? Carbon::parse($v->check_out_at)->format('Y-m-d H:i:s') : '';
+
+            fputcsv($out, [
+                $v->id,
+                $v->full_name,
+                $v->institution,
+                $cardCodeExcel,
+                $rfidExcel,
+                $checkIn,
+                $checkOut,
+            ], $delimiter);
+        }
+
+        fclose($out);
+    };
+
+    return response()->stream($callback, 200, $headers);
+}
+
 }
