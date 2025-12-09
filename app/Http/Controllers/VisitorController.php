@@ -27,8 +27,8 @@ class VisitorController extends Controller
             }
 
             // ===== generate batch_code =====
-            $today  = Carbon::today();
-            $prefix = $today->format('dmy'); // 081225
+            $today  = Carbon::today()->toDateString();
+            $prefix = Carbon::now()->format('dmy');
 
             $lastToday = Visitor::query()
                 ->whereDate('tanggal', $today)
@@ -46,6 +46,7 @@ class VisitorController extends Controller
 
             // ===== create visitor =====
             $visitor = Visitor::create([
+                'tanggal'=> $today,
                 'batch_code'  => $batchCode,
                 'full_name'   => $data['full_name'],
                 'institution' => $data['institution'],
@@ -173,7 +174,7 @@ public function exportHistoryCsv(Request $request)
     $to   = $request->query('to');
 
     $rows = Visitor::query()
-        ->select(['id','full_name','institution','card_id','check_in_at','check_out_at'])
+        ->select(['id','batch_code','full_name','institution','card_id','check_in_at','check_out_at'])
         ->with(['card:id,code,rfid_code'])
         ->when($from, fn($qq) => $qq->whereDate('check_in_at', '>=', $from))
         ->when($to,   fn($qq) => $qq->whereDate('check_in_at', '<=', $to))

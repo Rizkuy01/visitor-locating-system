@@ -32,14 +32,13 @@ class CandidateVisitorController extends Controller
             'no_kendaraan'    => ['nullable', 'string', 'max:20'],
         ]);
 
-        // validasi conditional: kalau bawa kendaraan = ya, no_kendaraan wajib
         if (($data['bawa_kendaraan'] ?? 'tidak') === 'ya' && empty($data['no_kendaraan'])) {
             return back()->withInput()->withErrors([
-                'no_kendaraan' => 'No kendaraan wajib diisi jika membawa kendaraan.'
+                'no_kendaraan' => 'No kendaraan wajib diisi jika membawa kendaraan.',
             ]);
         }
 
-        $today = Carbon::today(); // timezone app
+        $today = Carbon::today();
 
         $result = DB::transaction(function () use ($data, $today) {
             // 1) ambil kartu available sesuai tipe
@@ -57,23 +56,30 @@ class CandidateVisitorController extends Controller
                 return ['ok' => false, 'message' => 'Kartu terpilih belum memiliki RFID code. Hubungi security/admin.'];
             }
 
-            // 2) bikin batch harian (001..dst, reset per tanggal)
-            // Lock baris visitor hari ini supaya aman dari race condition
-            $lastToday = Visitor::whereDate('tanggal', $today)
+            // 2) generate batch
+            $prefix = $today->format('dmy');
+
+            // Ambil last visitor/day
+            $lastToday = Visitor::query()
+                ->whereDate('tanggal', $today->toDateString())
+                ->whereNotNull('batch')
                 ->orderBy('batch', 'desc')
                 ->lockForUpdate()
                 ->first();
 
-            $nextNumber = 1;
-            if ($lastToday && $lastToday->batch) {
-                $nextNumber = ((int) $lastToday->batch) + 1;
+            $nextSeq = 1;
+            if ($lastToday && preg_match('/^\d{6}(\d{3})$/', (string) $lastToday->batch, $m)) {
+                $nextSeq = ((int) $m[1]) + 1;
             }
-            $batch = str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
+
+            $batch = $prefix . str_pad((string) $nextSeq, 3, '0', STR_PAD_LEFT);
 
             // 3) set kartu jadi booked
             $card->update(['status' => 'booked']);
 
             // 4) simpan booking ke tabel visitors
+            logger()->info('BATCH_GENERATED', ['batch' => $batch]);
+
             $visitor = Visitor::create([
                 'tanggal'       => $today->toDateString(),
                 'batch'         => $batch,
@@ -84,8 +90,8 @@ class CandidateVisitorController extends Controller
 
                 'no_hp'         => $data['no_hp'] ?? null,
                 'no_kendaraan'  => (($data['bawa_kendaraan'] ?? 'tidak') === 'ya')
-                                    ? ($data['no_kendaraan'] ?? null)
-                                    : null,
+                    ? ($data['no_kendaraan'] ?? null)
+                    : null,
 
                 'yang_ditemui'  => $data['yang_ditemui'] ?? null,
                 'urusan'        => $data['urusan'] ?? null,
@@ -95,11 +101,14 @@ class CandidateVisitorController extends Controller
                 'check_in_at'   => null,
                 'check_out_at'  => null,
             ]);
+            logger()->info('BATCH_SAVED', ['saved' => $visitor->batch]);
+
 
             return [
                 'ok' => true,
                 'payload' => [
                     'visitor_id'  => $visitor->id,
+
                     'tanggal'     => $visitor->tanggal,
                     'batch'       => $visitor->batch,
 
@@ -107,9 +116,9 @@ class CandidateVisitorController extends Controller
                     'institution' => $visitor->institution,
                     'tipe'        => $card->tipe,
                     'card_id'     => $card->id,
-                    'card_code'   => $card->code,      // VB001/VM001
-                    'rfid_code'   => $card->rfid_code, // kalau masih kamu butuhkan
-                ]
+                    'card_code'   => $card->code,
+                    'rfid_code'   => $card->rfid_code, 
+                ],
             ];
         });
 

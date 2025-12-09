@@ -27,7 +27,7 @@ function qrPayloadFromMeta(meta) {
   return raw || "-";
 }
 
-async function buildTicketCanvas({ meta, qrSize = 620 }) {
+async function buildTicketCanvas({ batchCode, meta, qrSize = 620 }) {
   const W = 900;
   const H = 1200;
 
@@ -44,9 +44,8 @@ async function buildTicketCanvas({ meta, qrSize = 620 }) {
   // logo
   let logoImg = null;
   try {
-    logoImg = await loadImage("/logo-kyb.png"); // public/logo-kyb.png
+    logoImg = await loadImage("/logo-kyb.png"); 
   } catch (_) {
-    // kalau gagal load logo, lanjut tanpa logo
   }
 
   let y = 70;
@@ -68,10 +67,10 @@ async function buildTicketCanvas({ meta, qrSize = 620 }) {
   ctx.fillText("VISITOR QR", W / 2, y);
   y += 30;
 
-  // QR (isi: VB001/VM001)
-  const payload = qrPayloadFromMeta(meta);
+  // QR
+  // const payload = qrPayloadFromMeta(meta);
   const qrCanvas = document.createElement("canvas");
-  await QRCode.toCanvas(qrCanvas, String(payload), {
+  await QRCode.toCanvas(qrCanvas, String(batchCode), {
     errorCorrectionLevel: "H",
     margin: 2,
     width: qrSize,
@@ -101,54 +100,56 @@ async function buildTicketCanvas({ meta, qrSize = 620 }) {
 }
 
 async function renderQrToPage() {
-  const wrap = $("qrWrap");
+  const meta = window.CANDIDATE_META ?? {};
+
+  // ambil batch_code dari meta (disarankan)
+  const batchCode = meta?.batch ?? window.CANDIDATE_BATCH;
+  if (!batchCode) return;
+
+  const wrap = $('qrWrap');
   if (!wrap) return;
 
-  const meta = window.CANDIDATE_META ?? {};
-  const payload = qrPayloadFromMeta(meta);
-  if (!payload || payload === "-") return;
-
-  // Render QR untuk tampilan halaman
-  wrap.innerHTML = "";
-  const qrCanvas = document.createElement("canvas");
-  await QRCode.toCanvas(qrCanvas, String(payload), {
-    errorCorrectionLevel: "H",
+  // Render QR kecil di halaman
+  wrap.innerHTML = '';
+  const qrCanvas = document.createElement('canvas');
+  await QRCode.toCanvas(qrCanvas, String(batchCode), {
+    errorCorrectionLevel: 'H',
     margin: 2,
     width: 220,
   });
   wrap.appendChild(qrCanvas);
 
   // Download handler
-  const btn = $("downloadPngBtn");
+  const btn = $('downloadPngBtn');
   if (btn) {
-    btn.addEventListener("click", async () => {
+    btn.addEventListener('click', async () => {
       btn.disabled = true;
-      btn.classList.add("opacity-70", "cursor-not-allowed");
-
+      btn.classList.add('opacity-70', 'cursor-not-allowed');
       try {
-        const ticket = await buildTicketCanvas({ meta });
+        const ticket = await buildTicketCanvas({ batchCode, meta });
 
-        const safeName = String(meta?.full_name ?? "visitor")
+        const safeName = String(meta?.full_name ?? 'visitor')
           .trim()
-          .replace(/\s+/g, "_")
-          .replace(/[^a-zA-Z0-9_-]/g, "");
+          .replace(/\s+/g, '_')
+          .replace(/[^a-zA-Z0-9_-]/g, '');
 
-        const vCode = formatVisitorCardCode(meta?.card_code);
+        const a = document.createElement('a');
+        a.href = ticket.toDataURL('image/png');
 
-        const a = document.createElement("a");
-        a.href = ticket.toDataURL("image/png");
-        a.download = `${vCode}-${safeName || "visitor"}.png`;
+        // nama file pakai batch_code
+        a.download = `${batchCode}-${safeName || 'visitor'}.png`;
 
         document.body.appendChild(a);
         a.click();
         a.remove();
       } finally {
         btn.disabled = false;
-        btn.classList.remove("opacity-70", "cursor-not-allowed");
+        btn.classList.remove('opacity-70', 'cursor-not-allowed');
       }
     });
   }
 }
+
 
 document.addEventListener("DOMContentLoaded", () => {
   renderQrToPage().catch(console.error);

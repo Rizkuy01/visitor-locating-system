@@ -29,7 +29,7 @@
                 <div class="rounded-2xl border border-slate-200 bg-white p-4 flex flex-col items-center">
                     <div id="qrWrap" class="w-full flex justify-center"></div>
                     <div class="mt-3 text-xs text-slate-500">
-                        {{-- RFID: <span class="font-mono text-slate-800">{{ $rfid_code }}</span> --}}
+                        Batch: <span class="font-mono text-slate-800">{{ $batch }}</span>
                     </div>
                 </div>
 
@@ -52,13 +52,14 @@
             'institution' => $institution,
             'tipe' => $tipe,
             'card_code' => $card_code,
+            'batch' => $batch,
         ];
     @endphp
 
     <script>
-        window.CANDIDATE_QR = @json($rfid_code);
         window.CANDIDATE_META = @json($meta);
     </script>
+
 
 </body>
 
