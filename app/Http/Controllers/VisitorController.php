@@ -26,19 +26,19 @@ class VisitorController extends Controller
                 return response()->json(['message' => 'Kartu sedang digunakan. Pilih kartu lain.'], 409);
             }
 
-            // ===== generate batch_code =====
+            // ===== generate batch =====
             $today  = Carbon::today()->toDateString();
             $prefix = Carbon::now()->format('dmy');
 
             $lastToday = Visitor::query()
                 ->whereDate('tanggal', $today)
-                ->whereNotNull('batch_code')
-                ->orderBy('batch_code', 'desc')
+                ->whereNotNull('batch')
+                ->orderBy('batch', 'desc')
                 ->lockForUpdate()
                 ->first();
 
             $nextSeq = 1;
-            if ($lastToday && preg_match('/^\d{6}(\d{3})$/', $lastToday->batch_code, $m)) {
+            if ($lastToday && preg_match('/^\d{6}(\d{3})$/', $lastToday->batch, $m)) {
                 $nextSeq = ((int)$m[1]) + 1;
             }
 
@@ -47,7 +47,7 @@ class VisitorController extends Controller
             // ===== create visitor =====
             $visitor = Visitor::create([
                 'tanggal'=> $today,
-                'batch_code'  => $batchCode,
+                'batch'  => $batchCode,
                 'full_name'   => $data['full_name'],
                 'institution' => $data['institution'],
                 'card_id'     => $card->id,
@@ -65,7 +65,7 @@ class VisitorController extends Controller
                 ],
                 'visitor' => [
                     'id'          => $visitor->id,
-                    'batch_code'  => $visitor->batch_code,
+                    'batch'  => $visitor->batch,
                     'full_name'   => $visitor->full_name,
                     'institution' => $visitor->institution,
                     'check_in_at' => $visitor->check_in_at,
@@ -147,7 +147,7 @@ class VisitorController extends Controller
     $to   = $request->query('to');   // YYYY-MM-DD
 
     $rows = Visitor::query()
-        ->select(['id','batch_code','full_name','institution','card_id','check_in_at','check_out_at'])
+        ->select(['id','batch','full_name','institution','card_id','check_in_at','check_out_at'])
         ->with(['card:id,code,rfid_code'])
         ->when($from, fn($qq) => $qq->whereDate('check_in_at', '>=', $from))
         ->when($to,   fn($qq) => $qq->whereDate('check_in_at', '<=', $to))
@@ -174,7 +174,7 @@ public function exportHistoryCsv(Request $request)
     $to   = $request->query('to');
 
     $rows = Visitor::query()
-        ->select(['id','batch_code','full_name','institution','card_id','check_in_at','check_out_at'])
+        ->select(['id','batch','full_name','institution','card_id','check_in_at','check_out_at'])
         ->with(['card:id,code,rfid_code'])
         ->when($from, fn($qq) => $qq->whereDate('check_in_at', '>=', $from))
         ->when($to,   fn($qq) => $qq->whereDate('check_in_at', '<=', $to))
@@ -222,7 +222,7 @@ public function exportHistoryCsv(Request $request)
 
             fputcsv($out, [
                 $v->id,
-                $v->batch_code,
+                $v->batch,
                 $v->full_name,
                 $v->institution,
                 $cardCodeExcel,
