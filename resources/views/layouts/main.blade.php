@@ -15,15 +15,14 @@
         {{-- SIDEBAR (desktop) --}}
         <aside class="hidden md:flex md:flex-col md:w-56 shrink-0 bg-white text-slate-900 border-r border-slate-200">
             <div class="h-16 flex items-center px-4 border-b border-slate-200">
-                {{-- Logo tanpa background & border --}}
                 <div class="h-10 flex items-center">
-                    <img src="/logo-kyb.png" alt="Logo" class="h-8 w-auto object-contain">
+                    <img src="/logo-kyb.png" alt="Logo" class="h-10 pl-6 object-contain">
                 </div>
             </div>
 
             <nav class="flex-1 px-3 py-4 space-y-1 text-sm font-semibold">
                 {{-- Security Desk --}}
-                <a href="{{ route('desk') }}" class="flex items-center gap-2 rounded-xl px-3 py-2
+                <a href="{{ route('desk') }}" class="flex items-center gap-2 rounded-xl px-3 py-4
                {{ request()->routeIs('desk') ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-100' }}">
                     <span class="w-5 h-5">
                         {{-- Icon chart (inline SVG, offline) --}}
@@ -38,7 +37,7 @@
 
                 {{-- Daftar Visitor --}}
                 <a href="{{ route('visitors.index') }}"
-                    class="flex items-center gap-2 rounded-xl px-3 py-2
+                    class="flex items-center gap-2 rounded-xl px-3 py-4
                {{ request()->routeIs('visitors.index') ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-100' }}">
                     <span class="w-5 h-5">
                         {{-- Icon list --}}
@@ -55,7 +54,7 @@
 
                 {{-- Scan / Check-in --}}
                 <a href="{{ route('visitors.scan.page') }}"
-                    class="flex items-center gap-2 rounded-xl px-3 py-2
+                    class="flex items-center gap-2 rounded-xl px-3 py-4
                {{ request()->routeIs('visitors.scan.page') ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-100' }}">
                     <span class="w-5 h-5">
                         {{-- Icon scan / QR --}}

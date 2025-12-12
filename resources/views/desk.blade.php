@@ -21,42 +21,6 @@
 
         <!-- Content -->
         <div class="p-6">
-            <!-- Sticky summary -->
-            <div class="sticky top-3 z-20 mb-4 rounded-2xl border border-slate-200 bg-white/80 backdrop-blur px-4 py-3">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <h2 class="text-lg font-semibold">Data Kartu</h2>
-                        <p id="summaryText" class="text-xs text-slate-500">Cek data visitor di dashboard ini.</p>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <div class="flex flex-wrap items-center gap-2 text-sm">
-                            <span
-                                class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5">
-                                <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                                <span class="text-slate-700 font-semibold">Available</span>
-                            </span>
-
-                            <span
-                                class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5">
-                                <span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
-                                <span class="text-slate-700 font-semibold">Booked</span>
-                            </span>
-
-                            <span
-                                class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5">
-                                <span class="h-2.5 w-2.5 rounded-full bg-red-500"></span>
-                                <span class="text-slate-700 font-semibold">Digunakan</span>
-                            </span>
-                        </div>
-
-                        <button id="refreshBtn"
-                            class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm hover:bg-slate-50">
-                            Refresh
-                        </button>
-                    </div>
-                </div>
-            </div>
 
             <!-- Panels: Active Visitors + History -->
             <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
@@ -139,6 +103,43 @@
                 </div>
             </div>
 
+
+            <!-- Sticky summary -->
+            <div class="sticky top-3 z-20 mb-4 rounded-2xl border border-slate-200 bg-white/80 backdrop-blur px-4 py-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-semibold">Data Kartu</h2>
+                        <p id="summaryText" class="text-xs text-slate-500">Cek data visitor di dashboard ini.</p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2 text-sm">
+                            <span
+                                class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5">
+                                <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                                <span class="text-slate-700 font-semibold">Available</span>
+                            </span>
+
+                            <span
+                                class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5">
+                                <span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+                                <span class="text-slate-700 font-semibold">Booked</span>
+                            </span>
+
+                            <span
+                                class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5">
+                                <span class="h-2.5 w-2.5 rounded-full bg-red-500"></span>
+                                <span class="text-slate-700 font-semibold">Digunakan</span>
+                            </span>
+                        </div>
+
+                        <button id="refreshBtn"
+                            class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm hover:bg-slate-50">
+                                        Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
             <!-- Cards: Office | Plant (divider vertikal) -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Office -->
@@ -285,24 +286,24 @@
                 const showTooltip = status === 'booked' || status === 'in_use';
 
                 const tooltipHtml = !showTooltip ? '' : `
-                                              <div class="pointer-events-none absolute left-1/2 top-0 z-30 w-40 -translate-x-1/2 -translate-y-2
-                                                          opacity-0 transition group-hover:-translate-y-4 group-hover:opacity-100">
-                                                <div class="rounded-lg bg-slate-900 text-white shadow-lg ring-1 ring-black/10 px-3 py-2">
-                                                  <div class="text-xs font-semibold">${escapeHtml(tooltipTitle)}</div>
-                                                  <div class="text-[11px] text-slate-200 mt-0.5">${escapeHtml(tooltipLine1)}</div>
-                                                  ${tooltipLine2 ? `<div class="text-[11px] text-slate-300 mt-1">${escapeHtml(tooltipLine2)}</div>` : ``}
-                                                  ${tooltipLine3 ? `<div class="text-[11px] text-slate-300 mt-1">${escapeHtml(tooltipLine3)}</div>` : ``}
-                                                </div>
-                                                <div class="mx-auto h-2 w-2 rotate-45 bg-slate-900 -mt-1"></div>
-                                              </div>
-                                            `;
+                                                              <div class="pointer-events-none absolute left-1/2 top-0 z-30 w-40 -translate-x-1/2 -translate-y-2
+                                                                          opacity-0 transition group-hover:-translate-y-4 group-hover:opacity-100">
+                                                                <div class="rounded-lg bg-slate-900 text-white shadow-lg ring-1 ring-black/10 px-3 py-2">
+                                                                  <div class="text-xs font-semibold">${escapeHtml(tooltipTitle)}</div>
+                                                                  <div class="text-[11px] text-slate-200 mt-0.5">${escapeHtml(tooltipLine1)}</div>
+                                                                  ${tooltipLine2 ? `<div class="text-[11px] text-slate-300 mt-1">${escapeHtml(tooltipLine2)}</div>` : ``}
+                                                                  ${tooltipLine3 ? `<div class="text-[11px] text-slate-300 mt-1">${escapeHtml(tooltipLine3)}</div>` : ``}
+                                                                </div>
+                                                                <div class="mx-auto h-2 w-2 rotate-45 bg-slate-900 -mt-1"></div>
+                                                              </div>
+                                                            `;
 
                 return `
-                                              <button data-id="${card.id}" data-status="${status}" class="${base} ${color}">
-                                                ${tooltipHtml}
-                                                <span class="leading-none">${escapeHtml(displayCardNo(card.code))}</span>
-                                              </button>
-                                            `;
+                                                              <button data-id="${card.id}" data-status="${status}" class="${base} ${color}">
+                                                                ${tooltipHtml}
+                                                                <span class="leading-none">${escapeHtml(displayCardNo(card.code))}</span>
+                                                              </button>
+                                                            `;
             }
 
             function normalizeCard(c) {
@@ -366,15 +367,15 @@
                     const durasi = humanizeDuration(v.check_in_at);
 
                     return `
-                                                <tr class="hover:bg-slate-50">
-                                                  <td class="py-2 pr-3 font-semibold text-slate-900">${escapeHtml(cardNo)}</td>
-                                                  <td class="py-2 pr-3">${escapeHtml(v.full_name)}</td>
-                                                  <td class="py-2 pr-3 text-slate-600">${escapeHtml(v.institution)}</td>
-                                                  <td class="py-2 pr-3 text-slate-600">${escapeHtml(v.no_hp)}</td>
-                                                  <td class="py-2 pr-3 text-slate-600">${masuk}</td>
-                                                  <td class="py-2 pr-3 font-semibold text-slate-900" data-duration="${v.check_in_at}">${durasi}</td>
-                                                </tr>
-                                              `;
+                                                                <tr class="hover:bg-slate-50">
+                                                                  <td class="py-2 pr-3 font-semibold text-slate-900">${escapeHtml(cardNo)}</td>
+                                                                  <td class="py-2 pr-3">${escapeHtml(v.full_name)}</td>
+                                                                  <td class="py-2 pr-3 text-slate-600">${escapeHtml(v.institution)}</td>
+                                                                  <td class="py-2 pr-3 text-slate-600">${escapeHtml(v.no_hp)}</td>
+                                                                  <td class="py-2 pr-3 text-slate-600">${masuk}</td>
+                                                                  <td class="py-2 pr-3 font-semibold text-slate-900" data-duration="${v.check_in_at}">${durasi}</td>
+                                                                </tr>
+                                                              `;
                 }).join('');
             }
 
@@ -394,13 +395,13 @@
                 tbody.innerHTML = rows.map(v => {
                     const cardNo = v.card?.code ?? '-';
                     return `
-                                                <tr class="hover:bg-slate-50">
-                                                  <td class="py-2 px-2 font-semibold">${escapeHtml(cardNo)}</td>
-                                                  <td class="py-2 px-2">${escapeHtml(v.full_name)}</td>
-                                                  <td class="py-2 px-2 text-slate-600">${shortDateTime(v.check_in_at)}</td>
-                                                  <td class="py-2 px-2 text-slate-600">${shortDateTime(v.check_out_at)}</td>
-                                                </tr>
-                                              `;
+                                                                <tr class="hover:bg-slate-50">
+                                                                  <td class="py-2 px-2 font-semibold">${escapeHtml(cardNo)}</td>
+                                                                  <td class="py-2 px-2">${escapeHtml(v.full_name)}</td>
+                                                                  <td class="py-2 px-2 text-slate-600">${shortDateTime(v.check_in_at)}</td>
+                                                                  <td class="py-2 px-2 text-slate-600">${shortDateTime(v.check_out_at)}</td>
+                                                                </tr>
+                                                              `;
                 }).join('');
             }
 

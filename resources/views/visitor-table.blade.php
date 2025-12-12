@@ -3,10 +3,9 @@
 @section('title', 'Daftar Visitor')
 
 @section('content')
-    {{-- Biar layout nggak full width, mirip halaman Scan --}}
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-7xl mx-auto pr-8">
         <div class="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-5 py-4 bg-red-500 text-white">
+            <div class="px-5 py-4 bg-red-500 text-white rounded-t-2xl">
                 <div class="flex items-center justify-between gap-4 flex-wrap">
                     <div>
                         <h1 class="text-2xl font-semibold">Daftar Visitor</h1>
@@ -16,7 +15,6 @@
             </div>
 
             <div class="p-5 space-y-4">
-                {{-- FILTER BAR (bisa scroll horizontal kalau kepanjangan) --}}
                 <div class="flex flex-nowrap items-center gap-3 overflow-x-auto pb-2">
                     <!-- Search -->
                     <div class="min-w-[320px] flex-1">
@@ -52,31 +50,30 @@
                     Tips: kosongkan tanggal untuk tampilkan semua data.
                 </p>
 
-                {{-- TABLE WRAPPER: yang bisa scroll horizontal hanya bagian ini --}}
+                {{-- TABLE WRAPPER --}}
                 <div class="rounded-2xl border border-slate-200 overflow-hidden">
-                    <div class="w-full overflow-x-auto">
-                        <table class="min-w-[1200px] w-full text-sm">
+                    <div class="w-full overflow-x-auto pb-1">
+                        <table class="w-full text-sm">
                             <thead class="bg-slate-400 text-white text-xs">
                                 <tr>
-                                    <th class="px-3 py-3 text-left">Tanggal</th>
-                                    <th class="px-3 py-3 text-left">Batch</th>
-                                    <th class="px-3 py-3 text-left">Nama</th>
-                                    <th class="px-3 py-3 text-left">Instansi</th>
-                                    <th class="px-3 py-3 text-left">No HP</th>
-                                    <th class="px-3 py-3 text-left">No Kendaraan</th>
-                                    <th class="px-3 py-3 text-left">Yang Ditemui</th>
-                                    <th class="px-3 py-3 text-left">Urusan</th>
-                                    <th class="px-3 py-3 text-left">Jumlah</th>
-                                    <th class="px-3 py-3 text-left">Jam</th>
-                                    <th class="px-3 py-3 text-left">Kartu</th>
-                                    <th class="px-3 py-3 text-left">Tipe</th>
-                                    {{-- <th class="px-3 py-3 text-left">RFID</th> --}}
-                                    <th class="px-3 py-3 text-left">Check-in</th>
-                                    <th class="px-3 py-3 text-left">Check-out</th>
-                                    <th class="px-3 py-3 text-left">Status</th>
+                                    <th class="px-3 py-3 text-center rounded-tl-2xl">Tanggal</th>
+                                    <th class="px-3 py-3 text-center">Batch</th>
+                                    <th class="px-3 py-3 text-center">Nama</th>
+                                    <th class="px-3 py-3 text-center">Instansi</th>
+                                    <th class="px-3 py-3 text-center">No HP</th>
+                                    <th class="px-3 py-3 text-center">No Kendaraan</th>
+                                    <th class="px-3 py-3 text-center">Yang Ditemui</th>
+                                    <th class="px-3 py-3 text-center">Urusan</th>
+                                    <th class="px-3 py-3 text-center">Jumlah</th>
+                                    <th class="px-3 py-3 text-center">Jam</th>
+                                    <th class="px-3 py-3 text-center">Kartu</th>
+                                    <th class="px-3 py-3 text-center">Tipe</th>
+                                    <th class="px-3 py-3 text-center">Check-in</th>
+                                    <th class="px-3 py-3 text-center">Check-out</th>
+                                    <th class="px-3 py-3 text-center rounded-tr-2xl">Status</th>
                                 </tr>
                             </thead>
-                            <tbody id="tbody" class="divide-y divide-slate-100"></tbody>
+                            <tbody id="tbody" class="divide-y divide-slate-100 bg-white"></tbody>
                         </table>
                     </div>
 
@@ -99,6 +96,7 @@
         </div>
     </div>
 @endsection
+
 
 @push('scripts')
     <script>
@@ -157,26 +155,26 @@
                             'bg-emerald-100 text-emerald-700';
 
                 return `
-                                                        <tr class="hover:bg-slate-50">
-                                                            <td class="px-3 py-2 whitespace-nowrap">${escapeHtml(r.tanggal)}</td>
-                                                            <td class="px-3 py-2 font-mono whitespace-nowrap">${escapeHtml(r.batch)}</td>
-                                                            <td class="px-3 py-2 font-semibold">${escapeHtml(r.full_name)}</td>
-                                                            <td class="px-3 py-2 font-semibold">${escapeHtml(r.institution)}</td>
-                                                            <td class="px-3 py-2 whitespace-nowrap">${escapeHtml(r.no_hp || '-')}</td>
-                                                            <td class="px-3 py-2 whitespace-nowrap">${escapeHtml(r.no_kendaraan || '-')}</td>
-                                                            <td class="px-3 py-2">${escapeHtml(r.yang_ditemui || '-')}</td>
-                                                            <td class="px-3 py-2">${escapeHtml(r.urusan || '-')}</td>
-                                                            <td class="px-3 py-2 whitespace-nowrap">${escapeHtml(r.jumlah ?? '-')} Orang</td>
-                                                            <td class="px-3 py-2 whitespace-nowrap">${escapeHtml(r.jam_pertemuan || '-')}</td>
-                                                            <td class="px-3 py-2 whitespace-nowrap font-semibold">${escapeHtml(r.card?.code ?? '-')}</td>
-                                                            <td class="px-3 py-2 whitespace-nowrap">${escapeHtml(String(r.card?.tipe ?? '-').toUpperCase())}</td>
-                                                            <td class="px-3 py-2 whitespace-nowrap">${fmt(r.check_in_at)}</td>
-                                                            <td class="px-3 py-2 whitespace-nowrap">${fmt(r.check_out_at)}</td>
-                                                            <td class="px-3 py-2 whitespace-nowrap">
-                                                                <span class="inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${badge}">${st}</span>
-                                                            </td>
-                                                        </tr>
-                                                    `;
+                                                            <tr class="hover:bg-slate-50">
+                                                                <td class="px-3 py-2 whitespace-nowrap">${escapeHtml(r.tanggal)}</td>
+                                                                <td class="px-3 py-2 font-mono whitespace-nowrap">${escapeHtml(r.batch)}</td>
+                                                                <td class="px-3 py-2 font-semibold">${escapeHtml(r.full_name)}</td>
+                                                                <td class="px-3 py-2 font-semibold">${escapeHtml(r.institution)}</td>
+                                                                <td class="px-3 py-2 whitespace-nowrap">${escapeHtml(r.no_hp || '-')}</td>
+                                                                <td class="px-3 py-2 whitespace-nowrap">${escapeHtml(r.no_kendaraan || '-')}</td>
+                                                                <td class="px-3 py-2">${escapeHtml(r.yang_ditemui || '-')}</td>
+                                                                <td class="px-3 py-2">${escapeHtml(r.urusan || '-')}</td>
+                                                                <td class="px-3 py-2 whitespace-nowrap">${escapeHtml(r.jumlah ?? '-')} Orang</td>
+                                                                <td class="px-3 py-2 whitespace-nowrap">${escapeHtml(r.jam_pertemuan || '-')}</td>
+                                                                <td class="px-3 py-2 whitespace-nowrap font-semibold">${escapeHtml(r.card?.code ?? '-')}</td>
+                                                                <td class="px-3 py-2 whitespace-nowrap">${escapeHtml(String(r.card?.tipe ?? '-').toUpperCase())}</td>
+                                                                <td class="px-3 py-2 whitespace-nowrap">${fmt(r.check_in_at)}</td>
+                                                                <td class="px-3 py-2 whitespace-nowrap">${fmt(r.check_out_at)}</td>
+                                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                                    <span class="inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${badge}">${st}</span>
+                                                                </td>
+                                                            </tr>
+                                                        `;
             }).join('');
 
             info.textContent = `Total: ${json.total ?? 0} • Page ${json.current_page ?? 1} / ${json.last_page ?? 1}`;
